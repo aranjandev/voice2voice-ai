@@ -1,0 +1,29 @@
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Models (large binary files)
+models/
+
+# Audio temp files
+*.wav
+*.mp3
+!tests/fixtures/*.wav

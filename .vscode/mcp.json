@@ -1,0 +1,22 @@
+{
+	"inputs": [],
+	"servers": {
+		"filesystem": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-filesystem",
+				"/Users/abhishekranjan/development/experiments/fully-ai-generated"
+			],
+			"type": "stdio"
+		},
+		"fetch": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-fetch"
+			],
+			"type": "stdio"
+		}
+	}
+}
