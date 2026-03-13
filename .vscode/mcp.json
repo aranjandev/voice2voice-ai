@@ -6,7 +6,7 @@
 			"args": [
 				"-y",
 				"@modelcontextprotocol/server-filesystem",
-				"/Users/abhishekranjan/development/experiments/fully-ai-generated"
+				"<project-root>/voice2voice-ai"
 			],
 			"type": "stdio"
 		},

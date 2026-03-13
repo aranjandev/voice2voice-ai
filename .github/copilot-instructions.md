@@ -1,7 +1,7 @@
 # Copilot Instructions
 
 All code generation, file creation, and terminal commands MUST be scoped to the
-project directory: `fully-ai-generated/`.
+project directory: `voice2voice-ai/`.
 
 Never suggest commands that:
 - Write to /tmp, ~, /usr, or any path outside the project

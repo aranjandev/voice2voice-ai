@@ -3,10 +3,10 @@
 ## Project Scope & Sandboxing
 
 **CRITICAL: All file and folder creation, modification, and deletion MUST occur
-within `/Users/abhishekranjan/development/experiments/fully-ai-generated/`.
+within `<project-root>/voice2voice-ai/`.
 Never read, write, or execute files outside this directory tree.**
 
-- Working directory: `fully-ai-generated/`
+- Working directory: `voice2voice-ai/`
 - All paths must be relative to the project root or absolute within it.
 - Never install global packages. Use a local virtual environment at `.venv/` managed by `uv`.
 - Never modify system audio settings or system-level configs.
