@@ -18,7 +18,7 @@ A fully local voice-to-voice AI assistant that listens through your microphone, 
 ```bash
 # 1. Clone the repo
 git clone <repo-url>
-cd fully-ai-generated
+cd voice2voice-ai
 
 # 2. Install dependencies
 make setup
@@ -118,7 +118,7 @@ Then set `TTS_VOICE` in `.env` (e.g., `Samantha`, `Daniel`, `Alex`).
 ## Project Structure
 
 ```
-fully-ai-generated/
+voice2voice-ai/
 ├── src/voice_app/
 │   ├── main.py                 # Pipeline orchestrator (entry point)
 │   ├── config.py               # Environment config + path safety
