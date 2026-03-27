@@ -4,8 +4,13 @@ setup:
 	uv venv
 	uv sync --extra dev
 
+VOICE ?=
 run:
+ifneq ($(VOICE),)
+	TTS_VOICE=$(VOICE) uv run voice-app
+else
 	uv run voice-app
+endif
 
 test:
 	uv run pytest

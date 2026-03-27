@@ -3,17 +3,19 @@
 import sys
 
 from voice_app.audio.capture import audio_to_wav_bytes, record_audio
+from voice_app.config import TTS_VOICE, is_voice_configured
 from voice_app.processing.llm import process_transcript
-from voice_app.synthesis.tts import synthesize
+from voice_app.synthesis.tts import list_available_voices, synthesize
 from voice_app.transcription.stt import transcribe
 
 
-def run_pipeline(use_llm: bool = True) -> None:
+def run_pipeline(use_llm: bool = True, voice: str | None = None) -> None:
     """Run one cycle of the voice-to-voice pipeline.
 
     Args:
         use_llm: If True, pass transcript through LLM before TTS.
                  If False, directly synthesize the transcript back as speech.
+        voice: TTS voice name. Uses config default when *None*.
     """
     # 1. Capture audio from microphone
     audio = record_audio()
@@ -35,7 +37,27 @@ def run_pipeline(use_llm: bool = True) -> None:
         text_to_speak = transcript
 
     # 5. Speak through macOS 'say' (plays directly through speakers)
-    synthesize(text_to_speak)
+    if voice:
+        synthesize(text_to_speak, voice=voice)
+    else:
+        synthesize(text_to_speak)
+
+
+def _pick_voice() -> str:
+    """Determine TTS voice — skip prompt when already configured."""
+    if is_voice_configured():
+        print(f"Using configured voice: {TTS_VOICE}")
+        return TTS_VOICE
+
+    from voice_app.cli import select_voice
+
+    try:
+        voices = list_available_voices()
+    except RuntimeError as exc:
+        print(f"⚠️  Could not list voices ({exc}). Using default: {TTS_VOICE}")
+        return TTS_VOICE
+
+    return select_voice(voices, default=TTS_VOICE)
 
 
 def main() -> None:
@@ -45,9 +67,11 @@ def main() -> None:
     print("Press Ctrl+C to quit.")
     print("=" * 50)
 
+    voice = _pick_voice()
+
     try:
         while True:
-            run_pipeline(use_llm=True)
+            run_pipeline(use_llm=True, voice=voice)
             print("\n--- Ready for next input ---\n")
     except KeyboardInterrupt:
         print("\n👋 Goodbye!")

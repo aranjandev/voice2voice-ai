@@ -1,8 +1,58 @@
 """Text-to-speech using macOS built-in 'say' command."""
 
+import re
 import subprocess
 
-from voice_app.config import PROJECT_ROOT, TTS_RATE, TTS_VOICE
+from voice_app.config import TTS_RATE, TTS_VOICE
+
+# Well-known macOS voices used as a fallback when `say -v ?` is unavailable
+# (e.g. during development on Linux).
+BUILTIN_VOICES: list[str] = [
+    "Alex",
+    "Daniel",
+    "Fiona",
+    "Karen",
+    "Moira",
+    "Samantha",
+    "Tessa",
+    "Veena",
+    "Victoria",
+]
+
+
+def list_available_voices() -> list[str]:
+    """Discover available macOS TTS voices via ``say -v ?``.
+
+    Falls back to :data:`BUILTIN_VOICES` when:
+
+    * ``say`` is not installed (Linux / other OS).
+    * ``say -v ?`` fails (e.g. macOS 15+ changed the interface).
+    * The command produces no parseable voice names.
+
+    Returns:
+        Sorted list of voice names.
+    """
+    try:
+        result = subprocess.run(
+            ["say", "-v", "?"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return list(BUILTIN_VOICES)
+
+    voices: list[str] = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # Each line looks like: "Samantha  en_US  # Most people ..."
+        # Voice name is everything before the first two-or-more spaces.
+        match = re.match(r"^(\S+(?:\s\S+)*?)\s{2,}", line)
+        if match:
+            voices.append(match.group(1))
+    return sorted(voices) if voices else list(BUILTIN_VOICES)
 
 
 def synthesize(
@@ -31,9 +81,7 @@ def synthesize(
         )
         print("✅ Speech complete.")
     except FileNotFoundError:
-        raise RuntimeError(
-            "'say' command not found. This TTS backend requires macOS."
-        )
+        raise RuntimeError("'say' command not found. This TTS backend requires macOS.")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"TTS synthesis failed: {e}") from e
 
