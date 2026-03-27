@@ -1,0 +1,187 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "sync-deps",
+            "type": "shell",
+            "command": "uv sync --extra dev",
+            "group": "build",
+            "detail": "Install/sync all project dependencies (including dev extras)",
+            "presentation": {
+                "reveal": "silent",
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "add-dep",
+            "type": "shell",
+            "command": "uv add ${input:packageName}",
+            "detail": "Add a new dependency via uv",
+            "problemMatcher": []
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "uv run pytest",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "detail": "Run the full test suite with pytest",
+            "problemMatcher": []
+        },
+        {
+            "label": "test-verbose",
+            "type": "shell",
+            "command": "uv run pytest -v --tb=short",
+            "group": "test",
+            "detail": "Run tests with verbose output and short tracebacks",
+            "problemMatcher": []
+        },
+        {
+            "label": "test-file",
+            "type": "shell",
+            "command": "uv run pytest ${input:testFile} -v",
+            "group": "test",
+            "detail": "Run a specific test file",
+            "problemMatcher": []
+        },
+        {
+            "label": "lint",
+            "type": "shell",
+            "command": "uv run ruff check src/ tests/",
+            "group": "build",
+            "detail": "Lint source and test files with ruff",
+            "problemMatcher": {
+                "owner": "ruff",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): (\\w+) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "lint-fix",
+            "type": "shell",
+            "command": "uv run ruff check --fix src/ tests/",
+            "group": "build",
+            "detail": "Auto-fix lint issues with ruff",
+            "problemMatcher": []
+        },
+        {
+            "label": "format",
+            "type": "shell",
+            "command": "uv run ruff format src/ tests/",
+            "group": "build",
+            "detail": "Format source and test files with ruff",
+            "problemMatcher": []
+        },
+        {
+            "label": "format-check",
+            "type": "shell",
+            "command": "uv run ruff format --check src/ tests/",
+            "group": "build",
+            "detail": "Check formatting without making changes",
+            "problemMatcher": []
+        },
+        {
+            "label": "run-app",
+            "type": "shell",
+            "command": "uv run voice-app",
+            "group": "build",
+            "detail": "Run the voice-app entry point",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "rm -rf dist build *.egg-info .pytest_cache src/voice_app/__pycache__ tests/__pycache__",
+            "detail": "Remove build artifacts and caches (preserves .venv)",
+            "problemMatcher": []
+        },
+        {
+            "label": "check-all",
+            "type": "shell",
+            "detail": "Run format-check, lint, and tests in sequence",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "format-check",
+                "lint",
+                "test"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "git-push",
+            "type": "shell",
+            "command": "bash scripts/git_ops.sh push",
+            "detail": "Push current branch to GitHub origin",
+            "problemMatcher": []
+        },
+        {
+            "label": "git-pull",
+            "type": "shell",
+            "command": "bash scripts/git_ops.sh pull",
+            "detail": "Pull latest changes from GitHub origin",
+            "problemMatcher": []
+        },
+        {
+            "label": "git-pr",
+            "type": "shell",
+            "command": "bash scripts/git_ops.sh pr \"${input:prTitle}\" \"${input:prBody}\" \"${input:prBase}\"",
+            "detail": "Create a GitHub pull request from the current branch",
+            "problemMatcher": []
+        },
+        {
+            "label": "git-branch",
+            "type": "shell",
+            "command": "bash scripts/git_ops.sh branch \"${input:branchName}\"",
+            "detail": "Create and switch to a new git branch",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "packageName",
+            "type": "promptString",
+            "description": "Package name to add (e.g. httpx)"
+        },
+        {
+            "id": "testFile",
+            "type": "promptString",
+            "description": "Test file path (e.g. tests/test_stt.py)",
+            "default": "tests/"
+        },
+        {
+            "id": "prTitle",
+            "type": "promptString",
+            "description": "Pull request title"
+        },
+        {
+            "id": "prBody",
+            "type": "promptString",
+            "description": "Pull request description (optional)",
+            "default": ""
+        },
+        {
+            "id": "prBase",
+            "type": "promptString",
+            "description": "Base branch to merge into",
+            "default": "main"
+        },
+        {
+            "id": "branchName",
+            "type": "promptString",
+            "description": "New branch name (e.g. feature/my-feature)"
+        }
+    ]
+}
