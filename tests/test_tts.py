@@ -38,11 +38,15 @@ class TestListAvailableVoices:
         )
 
     @patch("voice_app.synthesis.tts.subprocess")
-    def test_say_not_found_raises(self, mock_subprocess: MagicMock) -> None:
-        """Should raise RuntimeError when 'say' is not available."""
+    def test_say_not_found_returns_builtin_voices(
+        self, mock_subprocess: MagicMock
+    ) -> None:
+        """Should return BUILTIN_VOICES when 'say' is not available."""
+        from voice_app.synthesis.tts import BUILTIN_VOICES
+
         mock_subprocess.run.side_effect = FileNotFoundError()
-        with pytest.raises(RuntimeError, match="requires macOS"):
-            list_available_voices()
+        voices = list_available_voices()
+        assert voices == BUILTIN_VOICES
 
     @patch("voice_app.synthesis.tts.subprocess")
     def test_empty_output_returns_empty_list(self, mock_subprocess: MagicMock) -> None:

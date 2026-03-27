@@ -5,15 +5,30 @@ import subprocess
 
 from voice_app.config import TTS_RATE, TTS_VOICE
 
+# Well-known macOS voices used as a fallback when `say -v ?` is unavailable
+# (e.g. during development on Linux).
+BUILTIN_VOICES: list[str] = [
+    "Alex",
+    "Daniel",
+    "Fiona",
+    "Karen",
+    "Moira",
+    "Samantha",
+    "Tessa",
+    "Veena",
+    "Victoria",
+]
+
 
 def list_available_voices() -> list[str]:
     """Discover available macOS TTS voices via ``say -v ?``.
 
-    Returns:
-        Sorted list of voice names available on the system.
+    On non-macOS systems (where ``say`` is not available) the function
+    returns :data:`BUILTIN_VOICES` so the interactive picker still works
+    during development.
 
-    Raises:
-        RuntimeError: If the ``say`` command is not found (non-macOS).
+    Returns:
+        Sorted list of voice names.
     """
     try:
         result = subprocess.run(
@@ -23,7 +38,8 @@ def list_available_voices() -> list[str]:
             check=True,
         )
     except FileNotFoundError:
-        raise RuntimeError("'say' command not found. Voice listing requires macOS.")
+        # Not on macOS — return the built-in fallback list.
+        return list(BUILTIN_VOICES)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Failed to list voices: {e}") from e
 

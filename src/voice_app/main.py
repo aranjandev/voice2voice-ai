@@ -49,14 +49,15 @@ def _pick_voice() -> str:
         print(f"Using configured voice: {TTS_VOICE}")
         return TTS_VOICE
 
-    try:
-        from voice_app.cli import select_voice
+    from voice_app.cli import select_voice
 
+    try:
         voices = list_available_voices()
-        return select_voice(voices, default=TTS_VOICE)
     except RuntimeError as exc:
         print(f"⚠️  Could not list voices ({exc}). Using default: {TTS_VOICE}")
         return TTS_VOICE
+
+    return select_voice(voices, default=TTS_VOICE)
 
 
 def main() -> None:
