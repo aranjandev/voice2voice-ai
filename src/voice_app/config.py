@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# Snapshot the process environment BEFORE load_dotenv() so we can tell
+# whether a variable was set explicitly (shell / Makefile) vs. loaded
+# from the .env file.
+_PRE_DOTENV_ENV: frozenset[str] = frozenset(os.environ)
+
 load_dotenv(PROJECT_ROOT / ".env")
 
 
@@ -49,10 +54,11 @@ TTS_RATE: int = int(os.getenv("TTS_RATE", "175"))
 
 
 def is_voice_configured() -> bool:
-    """Check whether a TTS voice was explicitly set in the environment.
+    """Check whether ``TTS_VOICE`` was explicitly set in the process environment.
 
-    Returns:
-        True if the ``TTS_VOICE`` environment variable is present
-        (via ``.env`` or the process environment), False otherwise.
+    Returns ``True`` only when the variable was present **before**
+    ``load_dotenv()`` ran (i.e. set by the shell, Makefile, or CI).
+    Values that come solely from the ``.env`` file do **not** count,
+    so the interactive voice picker can still appear.
     """
-    return "TTS_VOICE" in os.environ
+    return "TTS_VOICE" in _PRE_DOTENV_ENV
