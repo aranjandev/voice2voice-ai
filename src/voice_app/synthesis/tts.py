@@ -1,8 +1,43 @@
 """Text-to-speech using macOS built-in 'say' command."""
 
+import re
 import subprocess
 
-from voice_app.config import PROJECT_ROOT, TTS_RATE, TTS_VOICE
+from voice_app.config import TTS_RATE, TTS_VOICE
+
+
+def list_available_voices() -> list[str]:
+    """Discover available macOS TTS voices via ``say -v ?``.
+
+    Returns:
+        Sorted list of voice names available on the system.
+
+    Raises:
+        RuntimeError: If the ``say`` command is not found (non-macOS).
+    """
+    try:
+        result = subprocess.run(
+            ["say", "-v", "?"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except FileNotFoundError:
+        raise RuntimeError("'say' command not found. Voice listing requires macOS.")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Failed to list voices: {e}") from e
+
+    voices: list[str] = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # Each line looks like: "Samantha  en_US  # Most people ..."
+        # Voice name is everything before the first two-or-more spaces.
+        match = re.match(r"^(\S+(?:\s\S+)*?)\s{2,}", line)
+        if match:
+            voices.append(match.group(1))
+    return sorted(voices)
 
 
 def synthesize(
@@ -31,9 +66,7 @@ def synthesize(
         )
         print("✅ Speech complete.")
     except FileNotFoundError:
-        raise RuntimeError(
-            "'say' command not found. This TTS backend requires macOS."
-        )
+        raise RuntimeError("'say' command not found. This TTS backend requires macOS.")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"TTS synthesis failed: {e}") from e
 

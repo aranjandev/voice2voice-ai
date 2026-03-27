@@ -46,3 +46,13 @@ STT_MODEL_PATH: str = os.getenv("STT_MODEL_PATH", "")
 # --- TTS Settings (macOS 'say' command) ---
 TTS_VOICE: str = os.getenv("TTS_VOICE", "Samantha")
 TTS_RATE: int = int(os.getenv("TTS_RATE", "175"))
+
+
+def is_voice_configured() -> bool:
+    """Check whether a TTS voice was explicitly set in the environment.
+
+    Returns:
+        True if the ``TTS_VOICE`` environment variable is present
+        (via ``.env`` or the process environment), False otherwise.
+    """
+    return "TTS_VOICE" in os.environ
