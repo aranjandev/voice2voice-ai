@@ -9,3 +9,62 @@ Never suggest commands that:
 - Modify system-level audio or OS configurations
 
 Use `uv` for all Python dependency management — never `pip` or `python -m venv`.
+
+## Code Contribution
+
+### Branching & Workflow
+
+1. **Create a feature branch** before making changes:
+   - VS Code task: `git-branch` (prompts for branch name)
+   - Terminal: `bash scripts/git_ops.sh branch feature/my-feature`
+   - Convention: `feature/`, `fix/`, `chore/` prefixes
+
+2. **Make changes** — commit early and often with clear messages:
+   ```bash
+   git add -A && git commit -m "feat: add awesome feature"
+   ```
+
+3. **Run quality checks** before pushing:
+   - VS Code task: `check-all` (runs format-check → lint → tests in sequence)
+   - Terminal: `uv run ruff format --check src/ tests/ && uv run ruff check src/ tests/ && uv run pytest`
+
+4. **Push** your branch to GitHub:
+   - VS Code task: `git-push`
+   - Terminal: `bash scripts/git_ops.sh push`
+
+5. **Pull** latest changes from origin:
+   - VS Code task: `git-pull`
+   - Terminal: `bash scripts/git_ops.sh pull`
+
+6. **Create a Pull Request**:
+   - VS Code task: `git-pr` (prompts for title, body, and base branch)
+   - Terminal: `bash scripts/git_ops.sh pr "PR title" "Description" main`
+   - The script auto-pushes the branch before creating the PR.
+   - PRs target `main` by default.
+
+### GitHub Authentication
+
+- A GitHub PAT is stored in `.env` as `GH_PAT`.
+- The helper script `scripts/git_ops.sh` reads `GH_PAT` from `.env` at runtime
+  — secrets never appear in task definitions or command history.
+- `.env` is git-ignored; never commit it.
+
+### Available VS Code Tasks (Git)
+
+| Task          | Description                                  |
+|---------------|----------------------------------------------|
+| `git-push`    | Push current branch to GitHub                |
+| `git-pull`    | Pull latest from GitHub for current branch   |
+| `git-pr`      | Create a pull request from current branch    |
+| `git-branch`  | Create and switch to a new branch            |
+
+### Commit Message Convention
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` — new feature
+- `fix:` — bug fix
+- `chore:` — maintenance (deps, CI, configs)
+- `docs:` — documentation only
+- `refactor:` — code restructuring without behavior change
+- `test:` — adding or updating tests
