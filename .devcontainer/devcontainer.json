@@ -1,0 +1,62 @@
+{
+  "name": "voice2voice-ai",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // Mount the workspace; no host audio devices are forwarded (safe for agents).
+  "workspaceFolder": "/workspaces/voice2voice-ai",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/voice2voice-ai,type=bind,consistency=cached",
+
+  // Drop all Linux capabilities the container does not need.
+  "capDrop": ["ALL"],
+
+  // Install project dependencies the moment the container is created.
+  "postCreateCommand": "uv sync --extra dev",
+
+  // Keep the Python interpreter used by VS Code in sync with uv's venv.
+  "remoteEnv": {
+    "PYTHONPATH": "/workspaces/voice2voice-ai/src",
+    // Propagate the project-level .env at runtime via python-dotenv; never
+    // hard-code secrets here.
+    "DOTENV_PATH": "/workspaces/voice2voice-ai/.env"
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/workspaces/voice2voice-ai/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+          }
+        },
+        "ruff.path": ["/workspaces/voice2voice-ai/.venv/bin/ruff"],
+        // Restrict the integrated terminal to the project root.
+        "terminal.integrated.cwd": "/workspaces/voice2voice-ai"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "github.copilot",
+        "github.copilot-chat",
+        "GitHub.vscode-github-actions"
+      ]
+    }
+  },
+
+  // Agents run as the non-root vscode user supplied by the base image.
+  "remoteUser": "vscode",
+
+  "features": {
+    // Git inside the container so agents can commit/branch.
+    "ghcr.io/devcontainers/features/git:1": {}
+  }
+}

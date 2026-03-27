@@ -37,9 +37,7 @@ def _get_model(
     return _model
 
 
-def transcribe(
-    audio_wav_bytes: bytes, model_size: str = STT_MODEL_SIZE
-) -> str:
+def transcribe(audio_wav_bytes: bytes, model_size: str = STT_MODEL_SIZE) -> str:
     """Transcribe audio bytes to text using local faster-whisper.
 
     Args:
