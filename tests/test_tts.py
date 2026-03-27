@@ -37,22 +37,35 @@ class TestListAvailableVoices:
             check=True,
         )
 
-    @patch("voice_app.synthesis.tts.subprocess")
-    def test_say_not_found_returns_builtin_voices(
-        self, mock_subprocess: MagicMock
-    ) -> None:
+    @patch("voice_app.synthesis.tts.subprocess.run")
+    def test_say_not_found_returns_builtin_voices(self, mock_run: MagicMock) -> None:
         """Should return BUILTIN_VOICES when 'say' is not available."""
         from voice_app.synthesis.tts import BUILTIN_VOICES
 
-        mock_subprocess.run.side_effect = FileNotFoundError()
+        mock_run.side_effect = FileNotFoundError()
+        voices = list_available_voices()
+        assert voices == BUILTIN_VOICES
+
+    @patch("voice_app.synthesis.tts.subprocess.run")
+    def test_say_failure_returns_builtin_voices(self, mock_run: MagicMock) -> None:
+        """Should return BUILTIN_VOICES when 'say -v ?' fails."""
+        import subprocess
+
+        from voice_app.synthesis.tts import BUILTIN_VOICES
+
+        mock_run.side_effect = subprocess.CalledProcessError(1, "say")
         voices = list_available_voices()
         assert voices == BUILTIN_VOICES
 
     @patch("voice_app.synthesis.tts.subprocess")
-    def test_empty_output_returns_empty_list(self, mock_subprocess: MagicMock) -> None:
-        """Should return an empty list when say produces no output."""
+    def test_empty_output_returns_builtin_voices(
+        self, mock_subprocess: MagicMock
+    ) -> None:
+        """Should return BUILTIN_VOICES when say produces no parseable output."""
+        from voice_app.synthesis.tts import BUILTIN_VOICES
+
         mock_subprocess.run.return_value = MagicMock(stdout="")
-        assert list_available_voices() == []
+        assert list_available_voices() == BUILTIN_VOICES
 
 
 class TestSynthesize:

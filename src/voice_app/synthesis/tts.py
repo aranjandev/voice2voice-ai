@@ -23,9 +23,11 @@ BUILTIN_VOICES: list[str] = [
 def list_available_voices() -> list[str]:
     """Discover available macOS TTS voices via ``say -v ?``.
 
-    On non-macOS systems (where ``say`` is not available) the function
-    returns :data:`BUILTIN_VOICES` so the interactive picker still works
-    during development.
+    Falls back to :data:`BUILTIN_VOICES` when:
+
+    * ``say`` is not installed (Linux / other OS).
+    * ``say -v ?`` fails (e.g. macOS 15+ changed the interface).
+    * The command produces no parseable voice names.
 
     Returns:
         Sorted list of voice names.
@@ -37,11 +39,8 @@ def list_available_voices() -> list[str]:
             text=True,
             check=True,
         )
-    except FileNotFoundError:
-        # Not on macOS — return the built-in fallback list.
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return list(BUILTIN_VOICES)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Failed to list voices: {e}") from e
 
     voices: list[str] = []
     for line in result.stdout.splitlines():
@@ -53,7 +52,7 @@ def list_available_voices() -> list[str]:
         match = re.match(r"^(\S+(?:\s\S+)*?)\s{2,}", line)
         if match:
             voices.append(match.group(1))
-    return sorted(voices)
+    return sorted(voices) if voices else list(BUILTIN_VOICES)
 
 
 def synthesize(
