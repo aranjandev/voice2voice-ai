@@ -50,6 +50,5 @@ def process_transcript(
         return result
     except Exception as e:
         raise RuntimeError(
-            f"LLM processing failed. Is Ollama running at {OLLAMA_BASE_URL}? "
-            f"Error: {e}"
+            f"LLM processing failed. Is Ollama running at {OLLAMA_BASE_URL}? Error: {e}"
         ) from e
