@@ -2,7 +2,7 @@
 
 import sys
 
-from voice_app.audio.capture import audio_to_wav_bytes, record_audio
+from voice_app.audio.capture import audio_to_wav_bytes, record_until_silence
 from voice_app.config import TTS_VOICE, is_voice_configured
 from voice_app.processing.llm import process_transcript
 from voice_app.synthesis.tts import list_available_voices, synthesize
@@ -17,11 +17,15 @@ def run_pipeline(use_llm: bool = True, voice: str | None = None) -> None:
                  If False, directly synthesize the transcript back as speech.
         voice: TTS voice name. Uses config default when *None*.
     """
-    # 1. Capture audio from microphone
-    audio = record_audio()
+    # 1. Capture audio until the user stops speaking (VAD-based)
+    audio = record_until_silence()
+
+    if audio is None:
+        print("⚠️  No audio captured. Check your microphone.")
+        return
 
     # 2. Convert to WAV bytes for the STT model
-    wav_bytes = audio_to_wav_bytes(audio)
+    wav_bytes = audio_to_wav_bytes(audio.reshape(-1, 1))
 
     # 3. Transcribe speech to text (local faster-whisper)
     transcript = transcribe(wav_bytes)

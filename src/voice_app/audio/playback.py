@@ -50,8 +50,6 @@ def play_file_bytes(
         # a decoder. We avoid global deps by requiring this only when needed.
         try:
             import subprocess
-            import tempfile
-            from pathlib import Path
 
             from voice_app.config import PROJECT_ROOT
 

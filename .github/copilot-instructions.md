@@ -126,6 +126,18 @@ Applies whenever an agent runs shell commands in a terminal. Violations produce 
 
 Agents in this project follow a structured, phase-driven workflow: they read a JIRA ticket, plan and implement the change, self-review, and submit a Pull Request. All agent behaviour is coordinated through the files under `.github/`.
 
+### Git Push Authentication
+
+Agents push code using the `git-operations` skill (`git_helper.py push`). The script reads `.env` at the repo root and injects credentials automatically via `GIT_ASKPASS` — no system credential helper or `gh auth` required.
+
+**Required `.env` variables for HTTPS remotes:**
+- GitHub: `GITHUB_TOKEN=<personal-access-token>` (needs `repo` scope)
+- Bitbucket: `BITBUCKET_TOKEN=<app-password>` and `BITBUCKET_USERNAME=<your-username>`
+
+SSH remotes do not require these variables.
+
+> **Critical:** If `GITHUB_TOKEN` is absent or expired, `git push` will hang or fail silently. Do **not** attempt to work around this by calling `gh` CLI or modifying the remote URL manually — fix the token in `.env` instead.
+
 ### Agent Roster
 
 Five agents are available. Each has a defined scope and model tier:

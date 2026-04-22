@@ -1,10 +1,5 @@
 """Speech-to-text using local faster-whisper."""
 
-import io
-import tempfile
-from pathlib import Path
-
-import numpy as np
 from faster_whisper import WhisperModel
 
 from voice_app.config import PROJECT_ROOT, STT_MODEL_PATH, STT_MODEL_SIZE
