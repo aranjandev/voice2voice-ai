@@ -52,6 +52,12 @@ STT_MODEL_PATH: str = os.getenv("STT_MODEL_PATH", "")
 TTS_VOICE: str = os.getenv("TTS_VOICE", "Samantha")
 TTS_RATE: int = int(os.getenv("TTS_RATE", "175"))
 
+# --- VAD Settings (Silero VAD) ---
+# Duration of trailing silence (ms) after speech before end-of-utterance is declared
+VAD_SILENCE_THRESHOLD_MS: int = int(os.getenv("VAD_SILENCE_THRESHOLD_MS", "700"))
+# Minimum speech duration (ms) required to count as a real utterance (noise rejection)
+VAD_MIN_SPEECH_DURATION_MS: int = int(os.getenv("VAD_MIN_SPEECH_DURATION_MS", "200"))
+
 
 def is_voice_configured() -> bool:
     """Check whether ``TTS_VOICE`` was explicitly set in the process environment.
