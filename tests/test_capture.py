@@ -184,3 +184,26 @@ class TestRecordUntilSilence:
             record_until_silence(vad=vad)
 
         vad.reset.assert_called_once()
+
+    def test_max_seconds_stops_recording(self) -> None:
+        """Recording should stop and return audio when max_seconds is reached.
+
+        max_seconds=0.1 → max_chunks = int(0.1 * 16000 / 512) = 3
+        Deliver exactly 3 speech chunks (VAD never fires EOU).
+        After 3 chunks, chunks_processed >= max_chunks → loop exits.
+        """
+        # VAD never fires EOU — speech keeps going
+        vad = _make_vad_stub([(True, False)] * 3)
+        chunks = [SPEECH_CHUNK] * 3
+
+        with patch(
+            "voice_app.audio.capture.sd.InputStream",
+            side_effect=_make_stream_side_effect(chunks),
+        ):
+            from voice_app.audio.capture import record_until_silence
+
+            # max_seconds=0.1 → max_chunks = int(0.1 * 16000 / 512) = 3
+            result = record_until_silence(vad=vad, max_seconds=0.1)
+
+        assert result is not None
+        assert result.shape[0] == CHUNK_SIZE * 3

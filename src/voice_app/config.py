@@ -57,6 +57,10 @@ TTS_RATE: int = int(os.getenv("TTS_RATE", "175"))
 VAD_SILENCE_THRESHOLD_MS: int = int(os.getenv("VAD_SILENCE_THRESHOLD_MS", "700"))
 # Minimum speech duration (ms) required to count as a real utterance (noise rejection)
 VAD_MIN_SPEECH_DURATION_MS: int = int(os.getenv("VAD_MIN_SPEECH_DURATION_MS", "200"))
+# Confidence score threshold [0, 1] above which a chunk is classified as speech
+VAD_SPEECH_THRESHOLD: float = float(os.getenv("VAD_SPEECH_THRESHOLD", "0.5"))
+# Maximum total recording duration (seconds) before forcing end-of-utterance
+MAX_RECORD_SECONDS: int = int(os.getenv("MAX_RECORD_SECONDS", "30"))
 
 
 def is_voice_configured() -> bool:

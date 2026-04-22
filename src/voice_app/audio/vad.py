@@ -2,22 +2,29 @@
 
 import numpy as np
 import torch
+from silero_vad import load_silero_vad
 
 from voice_app.config import (
     SAMPLE_RATE,
     VAD_MIN_SPEECH_DURATION_MS,
     VAD_SILENCE_THRESHOLD_MS,
+    VAD_SPEECH_THRESHOLD,
 )
 
 # Silero VAD requires 512 samples per chunk at 16 kHz (32 ms per chunk)
 VAD_CHUNK_SAMPLES: int = 512
+
+# Silero VAD only supports these two sample rates
+_SUPPORTED_SAMPLE_RATES: frozenset[int] = frozenset({8000, 16000})
 
 # Module-level model cache — loaded once, reused across calls
 _vad_model: torch.nn.Module | None = None
 
 
 def _get_vad_model() -> torch.nn.Module:
-    """Load and cache the Silero VAD model.
+    """Load and cache the Silero VAD model from the installed package.
+
+    Uses the ``silero-vad`` PyPI package (no network call after install).
 
     Returns:
         Loaded Silero VAD torch model.
@@ -25,12 +32,7 @@ def _get_vad_model() -> torch.nn.Module:
     global _vad_model
     if _vad_model is None:
         print("📦 Loading Silero VAD model...")
-        model, _ = torch.hub.load(
-            repo_or_dir="snakers4/silero-vad",
-            model="silero_vad",
-            force_reload=False,
-            trust_repo=True,
-        )
+        model = load_silero_vad()
         model.eval()
         _vad_model = model
     return _vad_model
@@ -49,6 +51,8 @@ class SileroVAD:
             required to declare end-of-utterance.
         min_speech_duration_ms: Minimum accumulated speech duration in
             milliseconds to consider an utterance valid (noise rejection).
+        speech_threshold: Confidence score (0–1) above which a chunk is
+            classified as speech. Default is ``VAD_SPEECH_THRESHOLD``.
     """
 
     def __init__(
@@ -56,10 +60,14 @@ class SileroVAD:
         sample_rate: int = SAMPLE_RATE,
         silence_threshold_ms: int = VAD_SILENCE_THRESHOLD_MS,
         min_speech_duration_ms: int = VAD_MIN_SPEECH_DURATION_MS,
+        speech_threshold: float = VAD_SPEECH_THRESHOLD,
     ) -> None:
         """Initialise SileroVAD with configuration thresholds."""
+        if sample_rate not in _SUPPORTED_SAMPLE_RATES:
+            raise ValueError(f"Silero VAD requires 8000 or 16000 Hz; got {sample_rate}")
         self._model = _get_vad_model()
         self._sample_rate = sample_rate
+        self._speech_threshold = speech_threshold
         self._silence_samples = int(sample_rate * silence_threshold_ms / 1000)
         self._min_speech_samples = int(sample_rate * min_speech_duration_ms / 1000)
         self._reset_state()
@@ -83,7 +91,7 @@ class SileroVAD:
         tensor = torch.from_numpy(chunk.astype(np.float32))
         with torch.no_grad():
             confidence: float = self._model(tensor, self._sample_rate).item()
-        return confidence >= 0.5
+        return confidence >= self._speech_threshold
 
     def update(self, chunk: np.ndarray) -> tuple[bool, bool]:
         """Feed a chunk into the VAD state machine.

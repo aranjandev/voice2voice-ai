@@ -163,12 +163,76 @@ class TestSileroVADUpdate:
 
         mock_model.reset_states.assert_called()
 
+    def test_interleaved_silence_resets_counter(
+        self, patched_vad_model: MagicMock
+    ) -> None:
+        """Silence counter should reset when speech resumes mid-utterance."""
+        mock_model = _make_mock_model(confidence=0.9)
+        patched_vad_model.return_value = mock_model
+        from voice_app.audio.vad import SileroVAD
+
+        # 16000 Hz, 512 samples = 32ms per chunk
+        # silence_threshold_ms=64 → need 2 consecutive silence chunks
+        # min_speech_duration_ms=32 → need 1 speech chunk
+        vad = SileroVAD(
+            sample_rate=16000,
+            silence_threshold_ms=64,
+            min_speech_duration_ms=32,
+        )
+
+        # First speech chunk
+        vad.update(CHUNK_SPEECH)
+
+        # Brief silence (1 chunk = 32ms < 64ms threshold)
+        mock_model.return_value.item.return_value = 0.0
+        _, eou = vad.update(CHUNK_SILENT)
+        assert eou is False  # not enough silence yet
+
+        # Speech resumes — silence counter must reset
+        mock_model.return_value.item.return_value = 0.9
+        _, eou = vad.update(CHUNK_SPEECH)
+        assert eou is False
+
+        # Now trailing silence: first chunk — counter starts from zero again
+        mock_model.return_value.item.return_value = 0.0
+        _, eou1 = vad.update(CHUNK_SILENT)
+        assert eou1 is False  # 1 chunk = 32ms < 64ms
+
+        # Second trailing silence chunk — now >=64ms
+        _, eou2 = vad.update(CHUNK_SILENT)
+        assert eou2 is True
+
+
+class TestSileroVADInvalidConfig:
+    """Tests for SileroVAD constructor validation."""
+
+    def test_invalid_sample_rate_raises(self, patched_vad_model: MagicMock) -> None:
+        """Unsupported sample rate should raise ValueError immediately."""
+        patched_vad_model.return_value = _make_mock_model(confidence=0.5)
+        from voice_app.audio.vad import SileroVAD
+
+        with pytest.raises(ValueError, match="Silero VAD requires 8000 or 16000 Hz"):
+            SileroVAD(sample_rate=44100)
+
+    def test_custom_speech_threshold(self, patched_vad_model: MagicMock) -> None:
+        """Custom speech_threshold should override the default 0.5."""
+        patched_vad_model.return_value = _make_mock_model(confidence=0.65)
+        from voice_app.audio.vad import SileroVAD
+
+        # With default threshold (0.5), confidence 0.65 is speech
+        vad_low = SileroVAD(speech_threshold=0.5)
+        assert vad_low.is_speech(CHUNK_SPEECH) is True
+
+        # With threshold 0.7, confidence 0.65 is NOT speech
+        vad_high = SileroVAD(speech_threshold=0.7)
+        assert vad_high.is_speech(CHUNK_SPEECH) is False
+
 
 class TestVADModelCaching:
     """Tests verifying the module-level model cache behaviour."""
 
     def test_model_loaded_only_once(self) -> None:
-        """torch.hub.load is called once; subsequent SileroVAD reuses cache."""
+        """load_silero_vad is called once; subsequent SileroVAD reuses cache."""
         from voice_app.audio import vad as vad_module
 
         # Clear the module-level cache to force a fresh load in this test
@@ -180,13 +244,13 @@ class TestVADModelCaching:
 
         try:
             with patch(
-                "torch.hub.load", return_value=(mock_model, None)
-            ) as mock_hub_load:
+                "voice_app.audio.vad.load_silero_vad", return_value=mock_model
+            ) as mock_load:
                 from voice_app.audio.vad import SileroVAD
 
                 SileroVAD()
                 SileroVAD()
-                # Second SileroVAD hits the module-level cache; hub.load called once
-                mock_hub_load.assert_called_once()
+                # Second SileroVAD hits the module-level cache; load called once
+                mock_load.assert_called_once()
         finally:
             vad_module._vad_model = original
