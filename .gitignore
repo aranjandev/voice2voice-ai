@@ -27,3 +27,9 @@ models/
 *.wav
 *.mp3
 !tests/fixtures/*.wav
+
+# temporary files
+tmp/
+temp/
+.tmp/
+.temp/
